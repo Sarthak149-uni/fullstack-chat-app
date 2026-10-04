@@ -16,7 +16,7 @@ dotenv.config();
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 app.use(
   cors({
@@ -36,7 +36,9 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-server.listen(PORT, () => {
-  console.log("server is running on PORT:" + PORT);
-  connectDB();
+// Connect to DB first, then start listening
+connectDB().then(() => {
+  server.listen(PORT, () => {
+    console.log("server is running on PORT:" + PORT);
+  });
 });

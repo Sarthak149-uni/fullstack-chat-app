@@ -36,7 +36,12 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Account created successfully");
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      const message =
+        error.response?.data?.message ||
+        (error.code === "ERR_NETWORK"
+          ? "Unable to connect to server. Please check your connection."
+          : "Something went wrong. Please try again.");
+      toast.error(message);
     } finally {
       set({ isSigningUp: false });
     }
@@ -51,7 +56,12 @@ export const useAuthStore = create((set, get) => ({
 
       get().connectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      const message =
+        error.response?.data?.message ||
+        (error.code === "ERR_NETWORK"
+          ? "Unable to connect to server. Please check your connection."
+          : "Something went wrong. Please try again.");
+      toast.error(message);
     } finally {
       set({ isLoggingIn: false });
     }
@@ -64,7 +74,9 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Logged out successfully");
       get().disconnectSocket();
     } catch (error) {
-      toast.error(error.response.data.message);
+      const message =
+        error.response?.data?.message || "Failed to logout. Please try again.";
+      toast.error(message);
     }
   },
 
@@ -76,7 +88,10 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log("error in update profile:", error);
-      toast.error(error.response.data.message);
+      const message =
+        error.response?.data?.message ||
+        "Failed to update profile. Please try again.";
+      toast.error(message);
     } finally {
       set({ isUpdatingProfile: false });
     }
