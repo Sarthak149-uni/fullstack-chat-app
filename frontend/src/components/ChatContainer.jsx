@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
+import FilePreview from "./FilePreview";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 
@@ -81,6 +82,7 @@ const ChatContainer = () => {
               </time>
             </div>
             <div className="chat-bubble flex flex-col shadow-sm">
+              {/* Image attachment */}
               {message.image && (
                 <img
                   src={message.image}
@@ -88,6 +90,15 @@ const ChatContainer = () => {
                   className="sm:max-w-[200px] rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                 />
               )}
+
+              {/* File attachment */}
+              {message.file && message.file.url && (
+                <div className="mb-2">
+                  <FilePreview file={message.file} compact />
+                </div>
+              )}
+
+              {/* Text content */}
               {message.text && <p className="text-sm leading-relaxed">{message.text}</p>}
             </div>
           </div>

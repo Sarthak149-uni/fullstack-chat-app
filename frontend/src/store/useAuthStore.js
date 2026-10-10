@@ -121,8 +121,20 @@ export const useAuthStore = create((set, get) => ({
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    // Subscribe to call events after socket is connected
+    // Dynamic import to avoid circular dependency
+    import("./useCallStore.js").then(({ useCallStore }) => {
+      useCallStore.getState().subscribeToCallEvents();
+    });
   },
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
+    if (get().socket?.connected) {
+      // Unsubscribe from call events before disconnecting
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().unsubscribeFromCallEvents();
+      }).catch(() => {});
+      get().socket.disconnect();
+    }
   },
 }));

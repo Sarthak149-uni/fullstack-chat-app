@@ -41,6 +41,7 @@ export const useChatStore = create((set, get) => ({
       set({ isMessagesLoading: false });
     }
   },
+
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
     try {
@@ -51,6 +52,36 @@ export const useChatStore = create((set, get) => ({
         error.response?.data?.message ||
         error.response?.data?.error ||
         "Failed to send message.";
+      toast.error(message);
+    }
+  },
+
+  sendFile: async (file, text, onProgress) => {
+    const { selectedUser, messages } = get();
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (text) formData.append("text", text);
+
+      const res = await axiosInstance.post(
+        `/messages/send-file/${selectedUser._id}`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            onProgress?.(percent);
+          },
+        }
+      );
+      set({ messages: [...messages, res.data] });
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to send file.";
       toast.error(message);
     }
   },

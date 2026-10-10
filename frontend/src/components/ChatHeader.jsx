@@ -1,12 +1,27 @@
 import { X, Phone, Video, MoreVertical } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import { useCallStore } from "../store/useCallStore";
+import toast from "react-hot-toast";
 
 const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { onlineUsers } = useAuthStore();
+  const { initiateCall, callStatus } = useCallStore();
 
   const isOnline = onlineUsers.includes(selectedUser._id);
+
+  const handleCall = (type) => {
+    if (!isOnline) {
+      toast.error(`${selectedUser.fullName} is offline`);
+      return;
+    }
+    if (callStatus !== "idle") {
+      toast.error("Already in a call");
+      return;
+    }
+    initiateCall(selectedUser, type);
+  };
 
   return (
     <div className="px-4 py-3 border-b border-base-content/5 bg-base-100">
@@ -38,12 +53,28 @@ const ChatHeader = () => {
 
         {/* Action buttons */}
         <div className="flex items-center gap-1">
-          <button className="btn btn-ghost btn-sm btn-circle text-base-content/40 
-            hover:text-base-content/70 hover:bg-base-content/5">
+          <button
+            onClick={() => handleCall("audio")}
+            className={`btn btn-ghost btn-sm btn-circle transition-all duration-200
+              ${isOnline
+                ? "text-base-content/60 hover:text-green-500 hover:bg-green-500/10"
+                : "text-base-content/20 cursor-not-allowed"
+              }`}
+            disabled={!isOnline}
+            title="Voice call"
+          >
             <Phone className="w-4 h-4" />
           </button>
-          <button className="btn btn-ghost btn-sm btn-circle text-base-content/40 
-            hover:text-base-content/70 hover:bg-base-content/5">
+          <button
+            onClick={() => handleCall("video")}
+            className={`btn btn-ghost btn-sm btn-circle transition-all duration-200
+              ${isOnline
+                ? "text-base-content/60 hover:text-blue-500 hover:bg-blue-500/10"
+                : "text-base-content/20 cursor-not-allowed"
+              }`}
+            disabled={!isOnline}
+            title="Video call"
+          >
             <Video className="w-4 h-4" />
           </button>
           <button className="btn btn-ghost btn-sm btn-circle text-base-content/40 

@@ -3,6 +3,14 @@ import Message from "../models/message.model.js";
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import multer from "multer";
+
+// Multer config — store in memory, max 100MB
+const storage = multer.memoryStorage();
+export const upload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+});
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -65,6 +73,61 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error in sendMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const sendFile = async (req, res) => {
+  try {
+    const { id: receiverId } = req.params;
+    const senderId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const file = req.file;
+
+    // Upload buffer to Cloudinary as raw/auto
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: "auto",
+          folder: "chat_files",
+          public_id: `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(file.buffer);
+    });
+
+    const uploadResponse = await uploadPromise;
+
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text: req.body.text || "",
+      file: {
+        url: uploadResponse.secure_url,
+        name: file.originalname,
+        size: file.size,
+        type: file.mimetype,
+      },
+    });
+
+    await newMessage.save();
+
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.log("Error in sendFile controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
